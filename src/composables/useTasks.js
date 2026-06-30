@@ -22,7 +22,8 @@ function loadTasks() {
     if (!raw) return []
     const data = JSON.parse(raw)
     return Array.isArray(data) ? data : []
-  } catch {
+  } catch (e) {
+    console.warn('[task-dashboard] 读取 localStorage 失败，数据已损坏或不存在:', e)
     return []
   }
 }
@@ -31,12 +32,22 @@ function saveTasks(tasks) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
     return true
-  } catch {
+  } catch (e) {
+    console.warn('[task-dashboard] 写入 localStorage 失败:', e)
     return false
   }
 }
 
-const tasks = ref(loadTasks())
+function initTasks() {
+  try {
+    return loadTasks()
+  } catch (e) {
+    console.warn('[task-dashboard] 初始化任务数据失败:', e)
+    return []
+  }
+}
+
+const tasks = ref(initTasks())
 export const searchQuery = ref('')
 export const statusFilter = ref('')
 export const priorityFilter = ref('')
@@ -54,9 +65,12 @@ export function useTasks() {
     if (priorityFilter.value) {
       result = result.filter(t => t.priority === priorityFilter.value)
     }
-    return [...result].sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    return [...result].sort((a, b) => {
+      const timeDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      if (timeDiff !== 0) return timeDiff
+      // 时间相同时按 id 排序，保证顺序稳定
+      return a.id < b.id ? 1 : -1
+    })
   })
 
   function addTask({ title, status, priority }) {
@@ -73,7 +87,10 @@ export function useTasks() {
 
   function updateTask(id, updates) {
     const idx = tasks.value.findIndex(t => t.id === id)
-    if (idx === -1) return true
+    if (idx === -1) {
+      console.warn('[task-dashboard] 更新失败：未找到 id 为', id, '的任务')
+      return false
+    }
     const updated = { ...tasks.value[idx], ...updates }
     if (updates.title) updated.title = updates.title.trim()
     tasks.value = [

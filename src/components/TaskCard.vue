@@ -1,6 +1,6 @@
 <script setup>
 import { ElCard, ElTag, ElButton } from 'element-plus'
-import { STATUS_OPTIONS, PRIORITY_OPTIONS, STATUS_TAG_TYPE, PRIORITY_TAG_TYPE } from '../constants.js'
+import { STATUS_OPTIONS, PRIORITY_OPTIONS, STATUS_TAG_TYPE, PRIORITY_TAG_TYPE, formatTime } from '../constants.js'
 
 const props = defineProps({
   task: {
@@ -10,16 +10,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['edit', 'delete'])
-
-function formatTime(iso) {
-  try {
-    const d = new Date(iso)
-    const pad = (n) => String(n).padStart(2, '0')
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-  } catch {
-    return iso
-  }
-}
 
 function statusLabel(value) {
   const opt = STATUS_OPTIONS.find(o => o.value === value)
@@ -35,7 +25,15 @@ function priorityLabel(value) {
 <template>
   <ElCard class="task-card" shadow="hover">
     <div class="task-card__body">
-      <h3 class="task-card__title" @click="emit('edit', task)">{{ task.title }}</h3>
+      <h3
+        class="task-card__title"
+        role="button"
+        tabindex="0"
+        @click="emit('edit', task)"
+        @keydown.enter.prevent="emit('edit', task)"
+      >
+        {{ task.title }}
+      </h3>
       <div class="task-card__tags">
         <ElTag :type="STATUS_TAG_TYPE[task.status]" size="small">
           {{ statusLabel(task.status) }}

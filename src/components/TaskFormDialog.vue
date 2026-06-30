@@ -1,6 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue'
-import { ElDialog, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElButton } from 'element-plus'
+import { ref, watch, shallowRef } from 'vue'
+import { ElDialog, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElButton, ElMessageBox } from 'element-plus'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../constants.js'
 
 const props = defineProps({
@@ -22,6 +22,10 @@ const form = ref({
   status: 'todo',
   priority: 'medium'
 })
+const isDirty = ref(false)
+
+// 初始化表单的原始值快照，用于脏检测
+const initialFormSnapshot = shallowRef(null)
 
 const rules = {
   title: [
@@ -51,12 +55,35 @@ watch(() => props.visible, (val) => {
         priority: 'medium'
       }
     }
+    isDirty.value = false
+    initialFormSnapshot.value = { ...form.value }
     // 清除上次残留的验证错误
     formRef.value?.clearValidate()
   }
 })
 
-function handleClose() {
+// 表单变化时标记为 dirty
+watch(form, () => {
+  if (initialFormSnapshot.value) {
+    isDirty.value = true
+  }
+}, { deep: true })
+
+async function handleClose() {
+  if (isDirty.value) {
+    try {
+      await ElMessageBox.confirm('有未保存的修改，确定要关闭吗？', '提示', {
+        confirmButtonText: '确定关闭',
+        cancelButtonText: '继续编辑',
+        type: 'warning'
+      })
+    } catch {
+      // 用户选择继续编辑，不关闭弹窗
+      return
+    }
+  }
+  isDirty.value = false
+  initialFormSnapshot.value = null
   emit('update:visible', false)
 }
 

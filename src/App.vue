@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useTasks } from './composables/useTasks.js'
 import TaskHeader from './components/TaskHeader.vue'
@@ -8,6 +8,7 @@ import TaskList from './components/TaskList.vue'
 import TaskFormDialog from './components/TaskFormDialog.vue'
 
 const {
+  tasks,
   filteredTasks,
   searchQuery,
   statusFilter,
@@ -19,6 +20,10 @@ const {
 
 const dialogVisible = ref(false)
 const editingTask = ref(null)
+
+const isFiltering = computed(() =>
+  searchQuery.value || statusFilter.value || priorityFilter.value
+)
 
 // 对话框关闭时清除 editingTask 引用，防止残留
 watch(dialogVisible, (val) => {
@@ -80,6 +85,12 @@ function handleSave(formData) {
       v-model:statusFilter="statusFilter"
       v-model:priorityFilter="priorityFilter"
     />
+    <div class="task-count" v-if="tasks.length > 0">
+      共 <strong>{{ tasks.length }}</strong> 个任务
+      <template v-if="isFiltering">
+        ，已筛选出 <strong>{{ filteredTasks.length }}</strong> 个
+      </template>
+    </div>
     <TaskList
       :tasks="filteredTasks"
       @edit="handleEdit"
@@ -109,5 +120,11 @@ function handleSave(formData) {
     padding: 12px;
     gap: 12px;
   }
+}
+
+.task-count {
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+  padding: 0 4px;
 }
 </style>

@@ -21,3 +21,19 @@ export const PRIORITY_TAG_TYPE = {
   medium: 'warning',
   low: 'info'
 }
+
+/**
+ * 格式化 ISO 时间为本地可读字符串
+ * @param {string} iso - ISO 8601 时间字符串
+ * @returns {string} 格式化的 "YYYY-MM-DD HH:mm"
+ */
+export function formatTime(iso) {
+  try {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return iso
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  } catch {
+    return iso
+  }
+}

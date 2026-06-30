@@ -17,6 +17,13 @@ watch(localSearch, (val) => {
   }, 300)
 })
 
+// 外部对 searchQuery 的修改同步回 localSearch（如一键清空筛选）
+watch(searchQuery, (val) => {
+  if (val !== localSearch.value) {
+    localSearch.value = val
+  }
+})
+
 onUnmounted(() => {
   clearTimeout(debounceTimer)
 })
