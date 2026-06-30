@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 
 const STORAGE_KEY = 'task-dashboard-tasks'
 
@@ -111,9 +112,15 @@ export function useTasks() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `task-dashboard-${new Date().toISOString().slice(0, 10)}.json`
+    const d = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    const localDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    a.download = `task-dashboard-${localDate}.json`
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
     URL.revokeObjectURL(url)
+    ElMessage.success('任务数据已导出为 JSON')
   }
 
   return {
