@@ -91,11 +91,13 @@ function handleSave(formData) {
         ，已筛选出 <strong>{{ filteredTasks.length }}</strong> 个
       </template>
     </div>
-    <TaskList
-      :tasks="filteredTasks"
-      @edit="handleEdit"
-      @delete="handleDelete"
-    />
+    <div class="task-list-wrapper">
+      <TaskList
+        :tasks="filteredTasks"
+        @edit="handleEdit"
+        @delete="handleDelete"
+      />
+    </div>
     <TaskFormDialog
       v-model:visible="dialogVisible"
       :task="editingTask"
@@ -112,7 +114,9 @@ function handleSave(formData) {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
@@ -122,9 +126,16 @@ function handleSave(formData) {
   }
 }
 
+.task-list-wrapper {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
 .task-count {
   font-size: 14px;
   color: var(--el-text-color-secondary);
   padding: 0 4px;
+  flex-shrink: 0;
 }
 </style>
