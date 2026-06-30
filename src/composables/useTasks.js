@@ -106,6 +106,16 @@ export function useTasks() {
     return saveTasks(tasks.value)
   }
 
+  function exportTasksAsJson() {
+    const blob = new Blob([JSON.stringify(tasks.value, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `task-dashboard-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return {
     tasks,
     filteredTasks,
@@ -114,6 +124,7 @@ export function useTasks() {
     priorityFilter,
     addTask,
     updateTask,
-    deleteTask
+    deleteTask,
+    exportTasksAsJson
   }
 }
