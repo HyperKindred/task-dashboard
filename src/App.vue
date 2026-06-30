@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useTasks } from './composables/useTasks.js'
 import TaskHeader from './components/TaskHeader.vue'
@@ -20,6 +20,29 @@ const {
 
 const dialogVisible = ref(false)
 const editingTask = ref(null)
+
+const toolbarRef = ref(null)
+
+function handleKeydown(e) {
+  const tag = e.target?.tagName?.toLowerCase()
+  const isInput = ['input', 'textarea', 'select', 'button'].includes(tag) || e.target?.isContentEditable
+
+  // Ctrl+K 或 / → 聚焦搜索框
+  if ((e.ctrlKey && e.key === 'k') || (!isInput && e.key === '/')) {
+    e.preventDefault()
+    toolbarRef.value?.focusSearch?.()
+    return
+  }
+
+  // Enter（非输入框内、弹窗未打开时）→ 添加任务
+  if (e.key === 'Enter' && !isInput && !dialogVisible.value) {
+    e.preventDefault()
+    handleAdd()
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
 const isFiltering = computed(() =>
   searchQuery.value || statusFilter.value || priorityFilter.value
@@ -81,6 +104,7 @@ function handleSave(formData) {
   <div class="task-dashboard">
     <TaskHeader @add="handleAdd" />
     <TaskToolbar
+      ref="toolbarRef"
       v-model:searchQuery="searchQuery"
       v-model:statusFilter="statusFilter"
       v-model:priorityFilter="priorityFilter"

@@ -7,6 +7,7 @@ const searchQuery = defineModel('searchQuery', { type: String, default: '' })
 const statusFilter = defineModel('statusFilter', { type: String, default: '' })
 const priorityFilter = defineModel('priorityFilter', { type: String, default: '' })
 
+const searchInputRef = ref(null)
 const localSearch = ref(searchQuery.value)
 let debounceTimer = null
 
@@ -27,14 +28,21 @@ watch(searchQuery, (val) => {
 onUnmounted(() => {
   clearTimeout(debounceTimer)
 })
+
+function focusSearch() {
+  searchInputRef.value?.focus()
+}
+
+defineExpose({ focusSearch })
 </script>
 
 <template>
   <div class="task-toolbar">
     <ElInput
+      ref="searchInputRef"
       v-model="localSearch"
       class="task-toolbar__search"
-      placeholder="搜索任务..."
+      placeholder="搜索任务... (Ctrl+K / /)"
       clearable
       prefix-icon="Search"
     />
