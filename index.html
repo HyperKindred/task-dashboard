@@ -5,6 +5,10 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>任务看板</title>
+    <!-- 首屏同步设置 dark class，防止 JS 加载前闪白 -->
+    <script>
+    ;(function(){try{var s=localStorage.getItem('task-dashboard-theme');if(s!==null){if(s==='dark')document.documentElement.classList.add('dark')}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark')}}catch(e){}})()
+    </script>
   </head>
   <body>
     <div id="app"></div>
