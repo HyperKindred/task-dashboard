@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 
 const STORAGE_KEY = 'task-dashboard-tasks'
 
@@ -106,6 +107,22 @@ export function useTasks() {
     return saveTasks(tasks.value)
   }
 
+  function exportTasksAsJson() {
+    const blob = new Blob([JSON.stringify(tasks.value, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const d = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    const localDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    a.download = `task-dashboard-${localDate}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    ElMessage.success('任务数据已导出为 JSON')
+  }
+
   return {
     tasks,
     filteredTasks,
@@ -114,6 +131,7 @@ export function useTasks() {
     priorityFilter,
     addTask,
     updateTask,
-    deleteTask
+    deleteTask,
+    exportTasksAsJson
   }
 }
