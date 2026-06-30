@@ -20,15 +20,10 @@
 
 body {
   margin: 0;
+  background-color: var(--el-bg-color-page);
+  color: var(--el-text-color-primary);
 }
 
 #app {
   min-height: 100vh;
-}
-
-/* 暗黑模式页面背景和文字颜色 */
-html.dark body,
-html.dark #app {
-  background-color: var(--el-bg-color-page);
-  color: var(--el-text-color-primary);
 }
