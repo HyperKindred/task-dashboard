@@ -128,7 +128,7 @@ function handleSave(formData) {
 
 .task-list-wrapper {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
   min-height: 0;
 }
 

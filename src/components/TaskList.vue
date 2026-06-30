@@ -1,13 +1,14 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { FixedSizeGrid as ElFixedSizeGrid } from 'element-plus'
 import TaskCard from './TaskCard.vue'
 import TaskEmpty from './TaskEmpty.vue'
 
+// ⚠️ 以下常量必须与 <style> 中对应的 CSS 值保持同步
 const VIRTUAL_THRESHOLD = 100
-const MIN_COLUMN_WIDTH = 320
-const ROW_HEIGHT = 160
-const GRID_GAP = 16
+const MIN_COLUMN_WIDTH = 320   // ↔ <style> minmax(320px, 1fr)
+const ROW_HEIGHT = 180          // 容纳 2 行标题（约 178px）加少许余量
+const GRID_GAP = 16             // ↔ <style> gap: 16px
 
 const props = defineProps({
   tasks: {
@@ -21,8 +22,16 @@ const emit = defineEmits(['edit', 'delete'])
 const containerRef = ref(null)
 const containerWidth = ref(0)
 const containerHeight = ref(0)
+const gridRef = ref(null)
 
 let resizeObserver = null
+let mql = null
+
+const isMobile = ref(false)
+
+function handleMqlChange(e) {
+  isMobile.value = e.matches
+}
 
 function updateSize() {
   if (containerRef.value) {
@@ -33,6 +42,11 @@ function updateSize() {
 
 onMounted(() => {
   updateSize()
+
+  mql = window.matchMedia('(max-width: 768px)')
+  isMobile.value = mql.matches
+  mql.addEventListener('change', handleMqlChange)
+
   resizeObserver = new ResizeObserver(() => {
     updateSize()
   })
@@ -44,6 +58,8 @@ onMounted(() => {
 onUnmounted(() => {
   resizeObserver?.disconnect()
   resizeObserver = null
+  mql?.removeEventListener('change', handleMqlChange)
+  mql = null
 })
 
 /** 超过阈值时启用虚拟滚动 */
@@ -51,7 +67,7 @@ const useVirtual = computed(() => props.tasks.length > VIRTUAL_THRESHOLD)
 
 /** 根据容器宽度计算列数（模拟 minmax(320px, 1fr)） */
 const columns = computed(() => {
-  if (!containerWidth.value) return 1
+  if (!containerWidth.value || isMobile.value) return 1
   return Math.max(1, Math.floor((containerWidth.value + GRID_GAP) / (MIN_COLUMN_WIDTH + GRID_GAP)))
 })
 
@@ -74,12 +90,20 @@ function getTask(rowIndex, columnIndex) {
   const idx = rowIndex * columns.value + columnIndex
   return props.tasks[idx] ?? null
 }
+
+/** 筛选/搜索使结果集变化时滚动回顶部 */
+watch(() => props.tasks.length, () => {
+  if (useVirtual.value && gridRef.value) {
+    gridRef.value.scrollTo({ scrollTop: 0 })
+  }
+})
 </script>
 
 <template>
   <div ref="containerRef" class="task-list-root">
     <ElFixedSizeGrid
       v-if="useVirtual"
+      ref="gridRef"
       :column-width="columnWidth"
       :height="containerHeight"
       :row-height="ROW_HEIGHT + GRID_GAP"
@@ -91,11 +115,11 @@ function getTask(rowIndex, columnIndex) {
     >
       <template #default="{ columnIndex, rowIndex, data, style }">
         <div
-          v-if="getTask(rowIndex, columnIndex)"
-          :style="{ ...style, paddingRight: GRID_GAP + 'px', paddingBottom: GRID_GAP + 'px', boxSizing: 'border-box' }"
+          v-if="data?.[rowIndex * columns + columnIndex]"
+          :style="{ ...style, paddingRight: GRID_GAP + 'px', paddingBottom: GRID_GAP + 'px', boxSizing: 'border-box', overflow: 'hidden' }"
         >
           <TaskCard
-            :task="getTask(rowIndex, columnIndex)"
+            :task="data[rowIndex * columns + columnIndex]"
             @edit="emit('edit', $event)"
             @delete="emit('delete', $event)"
           />
@@ -128,6 +152,7 @@ function getTask(rowIndex, columnIndex) {
 
 .task-list {
   display: grid;
+  /* ⚠️ 若修改 gap 或 minmax 值，同步更新 JS 顶部的 GRID_GAP 和 MIN_COLUMN_WIDTH 常量 */
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
