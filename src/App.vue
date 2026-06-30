@@ -25,7 +25,7 @@ const toolbarRef = ref(null)
 
 function handleKeydown(e) {
   const tag = e.target?.tagName?.toLowerCase()
-  const isInput = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target?.isContentEditable
+  const isInput = ['input', 'textarea', 'select', 'button'].includes(tag) || e.target?.isContentEditable
 
   // Ctrl+K 或 / → 聚焦搜索框
   if ((e.ctrlKey && e.key === 'k') || (!isInput && e.key === '/')) {
