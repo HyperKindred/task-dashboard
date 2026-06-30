@@ -1,3 +1,6 @@
+/* Element Plus 暗黑模式 CSS 变量（html.dark 选择器） */
+@import 'element-plus/theme-chalk/dark/css-vars.css';
+
 :root {
   color-scheme: light dark;
 
@@ -17,6 +20,8 @@
 
 body {
   margin: 0;
+  background-color: var(--el-bg-color-page);
+  color: var(--el-text-color-primary);
 }
 
 #app {

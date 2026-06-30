@@ -62,11 +62,15 @@ watch(() => props.visible, (val) => {
   }
 })
 
-// 表单变化时标记为 dirty
+// 表单变化时标记为 dirty（仅当值真正改变时）
 watch(form, () => {
-  if (initialFormSnapshot.value) {
-    isDirty.value = true
-  }
+  if (!initialFormSnapshot.value) return
+  const s = initialFormSnapshot.value
+  isDirty.value = (
+    form.value.title !== s.title ||
+    form.value.status !== s.status ||
+    form.value.priority !== s.priority
+  )
 }, { deep: true })
 
 async function handleClose() {
@@ -91,6 +95,8 @@ async function handleConfirm() {
   if (!formRef.value) return
   try {
     await formRef.value.validate()
+    isDirty.value = false
+    initialFormSnapshot.value = null
     emit('saved', { ...form.value })
   } catch {
     // 验证不通过，不做处理
