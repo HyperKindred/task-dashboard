@@ -19,7 +19,7 @@ const {
 } = useTasks()
 
 const dialogVisible = ref(false)
-const editingTask = ref(null)
+const selectedTask = ref(null)
 
 const toolbarRef = ref(null)
 
@@ -48,20 +48,20 @@ const isFiltering = computed(() =>
   searchQuery.value || statusFilter.value || priorityFilter.value
 )
 
-// 对话框关闭时清除 editingTask 引用，防止残留
+// 对话框关闭时清除 selectedTask 引用，防止残留
 watch(dialogVisible, (val) => {
   if (!val) {
-    editingTask.value = null
+    selectedTask.value = null
   }
 })
 
 function handleAdd() {
-  editingTask.value = null
+  selectedTask.value = null
   dialogVisible.value = true
 }
 
-function handleEdit(task) {
-  editingTask.value = task
+function handleOpenDetail(task) {
+  selectedTask.value = task
   dialogVisible.value = true
 }
 
@@ -85,18 +85,18 @@ async function handleDelete(id) {
 
 function handleSave(formData) {
   let saved
-  if (editingTask.value) {
-    saved = updateTask(editingTask.value.id, formData)
+  if (selectedTask.value) {
+    saved = updateTask(selectedTask.value.id, formData)
   } else {
     saved = addTask(formData)
   }
   if (saved) {
-    ElMessage.success(editingTask.value ? '任务已更新' : '任务已添加')
+    ElMessage.success(selectedTask.value ? '任务已更新' : '任务已添加')
   } else {
-    ElMessage.warning(editingTask.value ? '任务已更新，但本地存储写入失败，刷新后将丢失' : '任务已添加，但本地存储写入失败，刷新后将丢失')
+    ElMessage.warning(selectedTask.value ? '任务已更新，但本地存储写入失败，刷新后将丢失' : '任务已添加，但本地存储写入失败，刷新后将丢失')
   }
   dialogVisible.value = false
-  editingTask.value = null
+  selectedTask.value = null
 }
 </script>
 
@@ -118,13 +118,13 @@ function handleSave(formData) {
     <div class="task-list-wrapper">
       <TaskList
         :tasks="filteredTasks"
-        @edit="handleEdit"
+        @open-detail="handleOpenDetail"
         @delete="handleDelete"
       />
     </div>
     <TaskFormDialog
       v-model:visible="dialogVisible"
-      :task="editingTask"
+      :task="selectedTask"
       @saved="handleSave"
     />
   </div>

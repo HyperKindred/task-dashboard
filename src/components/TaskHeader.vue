@@ -2,11 +2,11 @@
 import { ElButton } from 'element-plus'
 import { Download, Moon, Sunny } from '@element-plus/icons-vue'
 import { useTheme } from '../composables/useTheme.js'
-import { useTasks } from '../composables/useTasks.js'
+import { useExport } from '../composables/useExport.js'
 
 const emit = defineEmits(['add'])
 const { isDark, toggleTheme } = useTheme()
-const { exportTasksAsJson } = useTasks()
+const { exportTasksAsJson } = useExport()
 </script>
 
 <template>
