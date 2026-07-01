@@ -102,6 +102,15 @@ async function handleCancel() {
   if (isCreateMode.value) {
     emit('update:visible', false)
   } else {
+    // 取消编辑：重置表单到原始数据，防止下次进入编辑时显示过期值
+    if (props.task) {
+      form.value = {
+        title: props.task.title,
+        description: props.task.description || '',
+        status: props.task.status,
+        priority: props.task.priority
+      }
+    }
     isEditing.value = false
     isDirty.value = false
     initialFormSnapshot.value = null

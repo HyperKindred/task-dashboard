@@ -24,8 +24,8 @@ function loadTasks() {
     if (!Array.isArray(data)) return []
     // 兼容旧数据：新增字段时给缺失的字段设默认值
     return data.map(t => ({
-      description: '',
-      ...t
+      ...t,
+      description: t.description ?? ''
     }))
   } catch (e) {
     console.warn('[task-dashboard] 读取 localStorage 失败，数据已损坏或不存在:', e)

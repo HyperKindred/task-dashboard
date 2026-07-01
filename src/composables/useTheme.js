@@ -6,8 +6,8 @@ function loadTheme() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved !== null) return saved === 'dark'
-  } catch {
-    // localStorage 不可用时静默降级
+  } catch (e) {
+    console.warn('[task-dashboard] 读取主题设置失败:', e)
   }
   try {
     return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -19,8 +19,8 @@ function loadTheme() {
 function saveTheme(dark) {
   try {
     localStorage.setItem(STORAGE_KEY, dark ? 'dark' : 'light')
-  } catch {
-    // localStorage 不可用时静默降级
+  } catch (e) {
+    console.warn('[task-dashboard] 写入主题设置失败:', e)
   }
 }
 
