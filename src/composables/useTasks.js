@@ -1,5 +1,4 @@
 import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
 
 const STORAGE_KEY = 'task-dashboard-tasks'
 
@@ -22,7 +21,12 @@ function loadTasks() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const data = JSON.parse(raw)
-    return Array.isArray(data) ? data : []
+    if (!Array.isArray(data)) return []
+    // 兼容旧数据：新增字段时给缺失的字段设默认值
+    return data.map(t => ({
+      ...t,
+      description: t.description ?? ''
+    }))
   } catch (e) {
     console.warn('[task-dashboard] 读取 localStorage 失败，数据已损坏或不存在:', e)
     return []
@@ -39,16 +43,7 @@ function saveTasks(tasks) {
   }
 }
 
-function initTasks() {
-  try {
-    return loadTasks()
-  } catch (e) {
-    console.warn('[task-dashboard] 初始化任务数据失败:', e)
-    return []
-  }
-}
-
-const tasks = ref(initTasks())
+const tasks = ref(loadTasks())
 export const searchQuery = ref('')
 export const statusFilter = ref('')
 export const priorityFilter = ref('')
@@ -58,7 +53,10 @@ export function useTasks() {
     let result = tasks.value
     const q = searchQuery.value.trim().toLowerCase()
     if (q) {
-      result = result.filter(t => t.title.toLowerCase().includes(q))
+      result = result.filter(t =>
+        t.title.toLowerCase().includes(q) ||
+        (t.description && t.description.toLowerCase().includes(q))
+      )
     }
     if (statusFilter.value) {
       result = result.filter(t => t.status === statusFilter.value)
@@ -66,6 +64,8 @@ export function useTasks() {
     if (priorityFilter.value) {
       result = result.filter(t => t.priority === priorityFilter.value)
     }
+    // 空结果或无筛选时跳过排序
+    if (result.length < 2) return [...result]
     return [...result].sort((a, b) => {
       const timeDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       if (timeDiff !== 0) return timeDiff
@@ -74,13 +74,16 @@ export function useTasks() {
     })
   })
 
-  function addTask({ title, status, priority }) {
+  function addTask({ title, description, status, priority }) {
+    const now = new Date().toISOString()
     const task = {
       id: generateId(),
       title: title.trim(),
+      description: (description || '').trim(),
       status,
       priority,
-      createdAt: new Date().toISOString()
+      createdAt: now,
+      updatedAt: now
     }
     tasks.value = [task, ...tasks.value]
     return saveTasks(tasks.value)
@@ -92,7 +95,8 @@ export function useTasks() {
       console.warn('[task-dashboard] 更新失败：未找到 id 为', id, '的任务')
       return false
     }
-    const updated = { ...tasks.value[idx], ...updates }
+    const now = new Date().toISOString()
+    const updated = { ...tasks.value[idx], ...updates, updatedAt: now }
     if (updates.title) updated.title = updates.title.trim()
     tasks.value = [
       ...tasks.value.slice(0, idx),
@@ -107,22 +111,6 @@ export function useTasks() {
     return saveTasks(tasks.value)
   }
 
-  function exportTasksAsJson() {
-    const blob = new Blob([JSON.stringify(tasks.value, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    const d = new Date()
-    const pad = (n) => String(n).padStart(2, '0')
-    const localDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-    a.download = `task-dashboard-${localDate}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    ElMessage.success('任务数据已导出为 JSON')
-  }
-
   return {
     tasks,
     filteredTasks,
@@ -131,7 +119,6 @@ export function useTasks() {
     priorityFilter,
     addTask,
     updateTask,
-    deleteTask,
-    exportTasksAsJson
+    deleteTask
   }
 }

@@ -28,40 +28,34 @@ function applyTheme(dark) {
   document.documentElement.classList.toggle('dark', dark)
 }
 
-const isDark = ref(loadTheme())
-
-// 同步 class（首屏由 index.html 内联脚本保证）
+export const isDark = ref(loadTheme())
 applyTheme(isDark.value)
 
-let _initialized = false
+// --- 模块级副作用：整个应用生命周期只执行一次 ---
+
+// 持久化：监听 isDark 变化，自动保存 + 应用主题
+watch(isDark, (val) => {
+  applyTheme(val)
+  saveTheme(val)
+})
+
+// 系统主题跟随：用户未手动保存偏好时，跟随系统昼夜切换
+try {
+  const mql = window.matchMedia('(prefers-color-scheme: dark)')
+  // 首次加载时若用户无保存偏好，以系统偏好为准
+  if (localStorage.getItem(STORAGE_KEY) === null) {
+    isDark.value = mql.matches
+  }
+  mql.addEventListener('change', (e) => {
+    if (localStorage.getItem(STORAGE_KEY) === null) {
+      isDark.value = e.matches
+    }
+  })
+} catch {
+  // matchMedia 不可用时静默降级
+}
 
 export function useTheme() {
-  // watch + OS 监听仅初始化一次，绑定到组件生命周期以支持 HMR 清理
-  if (!_initialized) {
-    _initialized = true
-
-    watch(isDark, (val) => {
-      applyTheme(val)
-      saveTheme(val)
-    })
-
-    // 无保存偏好时跟随系统主题变化（如 macOS 自动切日夜）
-    try {
-      const mql = window.matchMedia('(prefers-color-scheme: dark)')
-      mql.addEventListener('change', (e) => {
-        try {
-          // 用户已手动切换过的不覆盖
-          if (localStorage.getItem(STORAGE_KEY) !== null) return
-        } catch {
-          // localStorage 不可读时继续跟随系统
-        }
-        isDark.value = e.matches
-      })
-    } catch {
-      // matchMedia 不可用时静默降级
-    }
-  }
-
   function toggleTheme() {
     isDark.value = !isDark.value
   }
